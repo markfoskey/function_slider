@@ -1,0 +1,255 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<style>
+		body {
+			background-color: black;
+
+		}
+
+		canvas {
+			position: absolute;
+			margin-left: auto;
+			margin-right: auto;
+			left: 0;
+			right: 0;
+			bottom: 20;
+			border: solid 1px white;
+		}
+	</style>
+</head>
+
+<body>
+	<canvas id="canvas"></canvas>
+	<script type="application/javascript">
+
+		var imageWidth = window.innerWidth;
+		var imageHeight = window.innerHeight;
+		var canvas = null;
+		var ctx = null;
+		var bounds = null;
+		var selectedBox = null;
+		var panX = 0;
+		var panY = 0;
+		var mouseX = 0;
+		var mouseY = 0;
+		var oldMouseX = 0;
+		var oldMouseY = 0;
+		var mouseShiftX = 0;
+		var mouseShiftY = 0;
+		var mouseHeld = false;
+		var boxArray = [];
+
+		function FunctionBox(x, y, width, height, fn, text) {
+			this.x = x;
+			this.y = y;
+			this.width = width;
+			this.height = height;
+			this.fn = fn;
+			this.text = text;
+			this.handleHalfWidth = 0.1 * width;
+			this.handleHalfHeight = this.handleHalfWidth;
+			this.inHandleYshift = 0;
+			this.maxInput = 5;
+			this.isSelected = false;
+			this.updateBoxDetails();
+		}
+
+		FunctionBox.prototype.updateBoxDetails = function () {
+			this.scaleMargin = 30;
+			this.inScaleX = this.x + this.scaleMargin;
+			this.outScaleX = this.x + this.width - this.scaleMargin
+			this.scaleTopY = this.y + this.scaleMargin;
+			this.scaleBottomY = this.y + this.height - this.scaleMargin;
+			this.yMid = this.y + this.height / 2;
+			this.yScale = -this.height / (2 * this.maxInput);
+			this.inHandleX = this.x;
+			this.inHandleY = this.yMid + this.inHandleYshift;
+			this.input = this.inHandleYshift / this.yScale;
+			if (typeof this.fn === 'function') {
+				this.output = this.fn(this.input);
+			} else {
+				this.output = 0;
+			}
+			console.log(this.output);
+			this.outHandleX = this.x + this.width;
+			this.outHandleY = this.yMid + this.yScale * this.output;
+		}
+
+		FunctionBox.prototype.containsPoint = function (x, y) {
+			return (x > this.x && x < this.x + this.width)
+				&& (y > this.y && y < this.y + this.height);
+		}
+
+		FunctionBox.prototype.handleContainsPoint = function(x, y) {
+			return ((x-this.inHandleX)**2 + (y-this.inHandleY)**2 < this.handleHalfHeight**2);
+		}
+
+		FunctionBox.prototype.drawScale = function (x, ticksPerUnit, tickLen) {
+			ctx.strokeStyle = 'white';
+			ctx.moveTo(x, this.scaleTopY)
+			ctx.lineTo(x, this.scaleBottomY)
+			halfTick = tickLen / 2
+
+			tickSpacing = 1.0 / ticksPerUnit
+
+			numTicks = Math.floor((this.scaleTopY - this.yMid) / (this.yScale * tickSpacing))
+			for (let index = -numTicks; index <= numTicks; index++) {
+				y = this.yMid + index * tickSpacing * this.yScale;
+				thisTickLen = (index % ticksPerUnit == 0 ? tickLen : halfTick)
+				// console.log("index = " + index + ", thisTickLen = " + thisTickLen)
+				ctx.moveTo(x - thisTickLen, y)
+				ctx.lineTo(x + thisTickLen, y)
+			}
+		}
+
+		FunctionBox.prototype.connect = function(fb) {
+			this.upstream = fb;
+		}
+
+		FunctionBox.prototype.draw = function () {
+			ctx.fillStyle = "green";
+			ctx.fillRect(
+				this.x,
+				this.y,
+				this.width,
+				this.height
+			);
+			ctx.fillStyle = (selectedBox && selectedBox.handleGrabbed ? "blue" : "blue");
+			// ctx.fillStyle = "blue";
+			ctx.beginPath();
+			ctx.ellipse(this.inHandleX, this.inHandleY, this.handleHalfWidth, this.handleHalfHeight, 0, 0, 2 * Math.PI);
+			ctx.fill();
+			ctx.beginPath();
+			ctx.ellipse(this.outHandleX, this.outHandleY, this.handleHalfWidth, this.handleHalfHeight, 0, 0, 2 * Math.PI);
+			ctx.fill();
+
+			// drawScale(outScaleX, 10, .5)
+			tickIncrement = 0.1;
+			ctx.beginPath();
+			this.drawScale(this.inScaleX, 5, 10);
+			this.drawScale(this.outScaleX, 5, 10)
+			ctx.stroke(); 
+			
+			ctx.fillStyle = "white";
+			ctx.fillText(
+				this.text,
+				this.x + this.width * 0.5,
+				this.y + this.height * 0.5,
+				this.width
+			);
+			ctx.fillText(this.input, this.inScaleX, this.scaleTopY - 5, this.width);
+		}
+
+		window.onmousedown = function (e) {
+			mouseHeld = true;
+
+			if (!selectedBox) {
+				for (var i = boxArray.length - 1; i > -1; --i) {
+					handleSelected = false;
+					boxSelected = false;
+					if (boxArray[i].handleContainsPoint(mouseX, mouseY)) {
+						handleSelected = true;
+						boxSelected = true;
+					} else if (boxArray[i].containsPoint(mouseX, mouseY)) {
+						boxSelected = true;
+					}
+					if (boxSelected) {
+						selectedBox = boxArray[i];
+						selectedBox.isSelected = true;
+						mouseStartX = e.clientX - bounds.left;
+						mouseStartY = e.clientY - bounds.top;
+						if (handleSelected) {
+							selectedBox.handleGrabbed = true;
+							mouseShiftX = mouseStartX - selectedBox.inHandleX;
+							mouseShiftY = mouseStartY - selectedBox.inHandleY;
+						} else {
+							selectedBox.handleGrabbed = false;
+							mouseShiftX = mouseStartX - selectedBox.x;
+							mouseShiftY = mouseStartY - selectedBox.y;
+						}
+						requestAnimationFrame(draw);
+						return;
+					}
+				}
+			}
+		}
+
+		window.onmousemove = function (e) {
+			mouseX = e.clientX - bounds.left;
+			mouseY = e.clientY - bounds.top;
+
+			if (mouseHeld) {
+				if (selectedBox) {
+					if (selectedBox.handleGrabbed) {
+						newInHandleY = mouseY - mouseShiftY
+						selectedBox.inHandleYshift = newInHandleY - selectedBox.yMid
+					} else {
+						selectedBox.x = mouseX - mouseShiftX;
+						selectedBox.y = mouseY - mouseShiftY;
+					}
+					selectedBox.updateBoxDetails();
+				}
+			}
+
+			oldMouseX = mouseX;
+			oldMouseY = mouseY;
+
+			requestAnimationFrame(draw);
+		}
+
+		window.onmouseup = function (e) {
+			mouseHeld = false;
+
+			if (selectedBox) {
+				selectedBox.isSelected = false;
+				selectedBox = null;
+				requestAnimationFrame(draw);
+			}
+		}
+
+		function draw() {
+			ctx.fillStyle = "white";
+			ctx.fillRect(0, 0, imageWidth, imageHeight);
+
+			var box = null;
+			var xMin = 0;
+			var xMax = 0;
+			var yMin = 0;
+			var yMax = 0;
+
+			for (var i = 0; i < boxArray.length; ++i) {
+				box = boxArray[i];
+				box.draw();
+			}
+		}
+
+		window.onload = function () {
+			canvas = document.getElementById("canvas");
+			canvas.width = imageWidth;
+			canvas.height = imageHeight;
+
+			bounds = canvas.getBoundingClientRect();
+			ctx = canvas.getContext("2d");
+			ctx.textAlign = "center";
+			ctx.font = "15px Arial"
+
+			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return x**2; }, "x^2"));
+			boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.exp(x); }, "e^x"));
+			requestAnimationFrame(draw);
+		}
+
+		window.onunload = function () {
+			canvas = null;
+			ctx = null;
+			bounds = null;
+			selectedBox = null;
+			boxArray = null;
+		}
+
+	</script>
+</body>
+
+</html>
