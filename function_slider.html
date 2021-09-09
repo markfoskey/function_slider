@@ -54,6 +54,7 @@
 			this.inHandleYshift = 0;
 			this.maxInput = 5;
 			this.isSelected = false;
+			this.upstream = null;
 			this.updateBoxDetails();
 		}
 
@@ -67,8 +68,13 @@
 			this.yMid = this.y + this.height / 2;
 			this.yScale = -this.height / (2 * this.maxInput);
 			this.inHandleX = this.x;
+			if (this.upstream instanceof FunctionBox) {
+				this.input = this.upstream.output;
+				this.inHandleYshift = this.upstream.outHandleY - this.inHandleYMid;
+			} else {
+				this.input = this.inHandleYshift / this.yScale;
+			}
 			this.inHandleY = this.yMid + this.inHandleYshift;
-			this.input = this.inHandleYshift / this.yScale;
 			if (typeof this.fn === 'function') {
 				this.output = this.fn(this.input);
 			} else {
@@ -237,7 +243,7 @@
 			ctx.textAlign = "center";
 			ctx.font = "15px Arial"
 
-			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return x**2; }, "x^2"));
+			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
 			boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.exp(x); }, "e^x"));
 			requestAnimationFrame(draw);
 		}
