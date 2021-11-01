@@ -71,6 +71,7 @@
 			if (this.upstream instanceof FunctionBox) {
 				this.input = this.upstream.output;
 				this.inHandleYshift = this.upstream.outHandleY - this.inHandleYMid;
+				console.log("Has upstr, input = " + this.input + " ihys = " + this.inHandleYshift);	
 			} else {
 				this.input = this.inHandleYshift / this.yScale;
 			}
@@ -241,10 +242,11 @@
 			bounds = canvas.getBoundingClientRect();
 			ctx = canvas.getContext("2d");
 			ctx.textAlign = "center";
-			ctx.font = "15px Arial"
+			ctx.font = "15px Arial";
 
 			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
 			boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.exp(x); }, "e^x"));
+			boxArray[1].upstream = boxArray[0];
 			requestAnimationFrame(draw);
 		}
 
