@@ -54,8 +54,24 @@
 			this.inHandleYshift = 0;
 			this.maxInput = 5;
 			this.isSelected = false;
-			this.upstream = null;
+			this.downstream = null;
 			this.updateBoxDetails();
+		}
+
+		FunctionBox.prototype.inputFromHandleYshift = function(handleYshift) {
+			return handleYshift / this.yScale;
+		}
+
+		FunctionBox.prototype.handleYshiftFromInput = function(input) {
+			return input * this.yScale;
+		}
+
+		FunctionBox.prototype.setInput = function(input) {
+			this.inHandleYshift = this.handleYshiftFromInput(input);
+		}
+
+		FunctionBox.prototype.getInput = function() {
+			return this.inputFromHandleYshift(this.inHandleYshift);
 		}
 
 		// Called when a control is moved or the box is otherwise changed
@@ -67,21 +83,18 @@
 			this.scaleBottomY = this.y + this.height - this.scaleMargin;
 			this.yMid = this.y + this.height / 2;
 			this.yScale = -this.height / (2 * this.maxInput);
-			this.inHandleX = this.x;
-			if (this.upstream instanceof FunctionBox) {
-				this.input = this.upstream.output;
-				this.inHandleYshift = this.upstream.outHandleY - this.inHandleYMid;
-				console.log("Has upstr, input = " + this.input + " ihys = " + this.inHandleYshift);	
-			} else {
-				this.input = this.inHandleYshift / this.yScale;
-			}
-			this.inHandleY = this.yMid + this.inHandleYshift;
 			if (typeof this.fn === 'function') {
-				this.output = this.fn(this.input);
+				this.output = this.fn(this.getInput());
 			} else {
 				this.output = 0;
 			}
 			console.log(this.output);
+			if (this.downstream instanceof FunctionBox) {
+				this.downstream.setInput(this.output);
+				this.downstream.updateBoxDetails();
+			} 
+			this.inHandleX = this.x;
+			this.inHandleY = this.yMid + this.inHandleYshift;
 			this.outHandleX = this.x + this.width;
 			this.outHandleY = this.yMid + this.yScale * this.output;
 		}
@@ -93,6 +106,20 @@
 
 		FunctionBox.prototype.handleContainsPoint = function(x, y) {
 			return ((x-this.inHandleX)**2 + (y-this.inHandleY)**2 < this.handleHalfHeight**2);
+		}
+
+		FunctionBox.prototype.drawHandle = function(x, y) {
+			ctx.fillStyle = "blue";
+			let halfWidth = this.handleHalfWidth;
+			let halfHeight = this.handleHalfHeight;
+			ctx.beginPath();
+			ctx.ellipse(x, y, halfWidth, halfHeight, 0, 0, 2 * Math.PI);
+			ctx.fill();
+			ctx.strokeStyle = 'white';
+			ctx.beginPath();
+			ctx.moveTo(x - halfWidth, y);
+			ctx.lineTo(x + halfWidth, y);
+			ctx.stroke();
 		}
 
 		FunctionBox.prototype.drawScale = function (x, ticksPerUnit, tickLen) {
@@ -114,7 +141,7 @@
 		}
 
 		FunctionBox.prototype.connect = function(fb) {
-			this.upstream = fb;
+			this.downstream = fb;
 		}
 
 		FunctionBox.prototype.draw = function () {
@@ -125,16 +152,10 @@
 				this.width,
 				this.height
 			);
-			ctx.fillStyle = (selectedBox && selectedBox.handleGrabbed ? "blue" : "blue");
-			// ctx.fillStyle = "blue";
-			ctx.beginPath();
-			ctx.ellipse(this.inHandleX, this.inHandleY, this.handleHalfWidth, this.handleHalfHeight, 0, 0, 2 * Math.PI);
-			ctx.fill();
-			ctx.beginPath();
-			ctx.ellipse(this.outHandleX, this.outHandleY, this.handleHalfWidth, this.handleHalfHeight, 0, 0, 2 * Math.PI);
-			ctx.fill();
 
-			// drawScale(outScaleX, 10, .5)
+			this.drawHandle(this.inHandleX, this.inHandleY);
+			this.drawHandle(this.outHandleX, this.outHandleY);
+
 			tickIncrement = 0.1;
 			ctx.beginPath();
 			this.drawScale(this.inScaleX, 5, 10);
@@ -148,7 +169,7 @@
 				this.y + this.height * 0.5,
 				this.width
 			);
-			ctx.fillText(this.input, this.inScaleX, this.scaleTopY - 5, this.width);
+			ctx.fillText(this.getInput().toFixed(3), this.inScaleX, this.scaleTopY - 5, this.width);
 		}
 
 		window.onmousedown = function (e) {
@@ -244,9 +265,9 @@
 			ctx.textAlign = "center";
 			ctx.font = "15px Arial";
 
-			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
-			boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.exp(x); }, "e^x"));
-			boxArray[1].upstream = boxArray[0];
+			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return Math.exp(x); }, "e^x"));
+			boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
+			boxArray[0].downstream = boxArray[1];
 			requestAnimationFrame(draw);
 		}
 
