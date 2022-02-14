@@ -25,6 +25,7 @@
 	<canvas id="canvas"></canvas>
 	<script type="application/javascript">
 
+
 		var imageWidth = window.innerWidth;
 		var imageHeight = window.innerHeight;
 		var canvas = null;
@@ -71,6 +72,7 @@
 		}
 
 		FunctionBox.prototype.getInput = function() {
+			console.log("getInput: " + this.inHandleYshift);
 			return this.inputFromHandleYshift(this.inHandleYshift);
 		}
 
@@ -88,7 +90,7 @@
 			} else {
 				this.output = 0;
 			}
-			console.log(this.output);
+			console.log("output = " + this.output);
 			if (this.downstream instanceof FunctionBox) {
 				this.downstream.setInput(this.output);
 				this.downstream.updateBoxDetails();
@@ -255,6 +257,32 @@
 			}
 		}
 
+		let start, previousTimeStamp;
+
+		function step(timestamp) {
+
+			selectedBox = boxArray[0];
+
+			if (start === undefined) {
+				start = timestamp;
+			}
+			const elapsed = timestamp - start;
+
+			if (previousTimeStamp !== timestamp) {
+				// Math.min() is used here to make sure the element stops at exactly 200px
+				const count = Math.min(0.1 * elapsed, 200);
+				selectedBox.inHandleYshift = count;
+				console.log("Y shift = " + selectedBox.inHandleYshift);
+				selectedBox.updateBoxDetails();
+				draw();
+			}
+
+			if (elapsed < 2000) { // Stop the animation after 2 seconds
+				previousTimeStamp = timestamp
+				window.requestAnimationFrame(step);
+			}
+		}
+
 		window.onload = function () {
 			canvas = document.getElementById("canvas");
 			canvas.width = imageWidth;
@@ -268,7 +296,7 @@
 			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return Math.exp(x); }, "e^x"));
 			boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
 			boxArray[0].downstream = boxArray[1];
-			requestAnimationFrame(draw);
+			requestAnimationFrame(step);
 		}
 
 		window.onunload = function () {
