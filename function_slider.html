@@ -257,30 +257,36 @@
 			}
 		}
 
-		let start, previousTimeStamp;
+		function animateBoxes(t0sec, t1sec, inputFunc) {
+			let startMs, previousTimeStampMs;
 
-		function step(timestamp) {
+			durationMs = (t1sec - t0sec) * 1000;
 
-			selectedBox = boxArray[0];
+			function step(timestampMs) {
 
-			if (start === undefined) {
-				start = timestamp;
+				selectedBox = boxArray[0];
+
+				if (startMs === undefined) {
+					startMs = timestampMs;
+				}
+				const elapsedMs = timestampMs - startMs;
+
+				if (previousTimeStampMs !== timestampMs) {
+					// Math.min() is used here to make sure the motion stops after exactly the desired duration
+					const currTimeSec = t0sec + Math.min(elapsedMs, durationMs) / 1000;
+					const fnInput = inputFunc(currTimeSec);
+					selectedBox.setInput(fnInput);
+					selectedBox.updateBoxDetails();
+					draw();
+				}
+
+				if (elapsedMs < durationMs) { // Stop the animation after 2 seconds
+					previousTimeStampMs = timestampMs
+					window.requestAnimationFrame(step);
+				}
 			}
-			const elapsed = timestamp - start;
 
-			if (previousTimeStamp !== timestamp) {
-				// Math.min() is used here to make sure the element stops at exactly 200px
-				const count = Math.min(0.1 * elapsed, 200);
-				selectedBox.inHandleYshift = count;
-				console.log("Y shift = " + selectedBox.inHandleYshift);
-				selectedBox.updateBoxDetails();
-				draw();
-			}
-
-			if (elapsed < 2000) { // Stop the animation after 2 seconds
-				previousTimeStamp = timestamp
-				window.requestAnimationFrame(step);
-			}
+			window.requestAnimationFrame(step);
 		}
 
 		window.onload = function () {
@@ -296,7 +302,8 @@
 			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return Math.exp(x); }, "e^x"));
 			boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
 			boxArray[0].downstream = boxArray[1];
-			requestAnimationFrame(step);
+			animateBoxes(-3, 6, function(t) { return t; });
+			// requestAnimationFrame(step);
 		}
 
 		window.onunload = function () {
