@@ -257,6 +257,28 @@
 			}
 		}
 
+		function point(x, y) {
+			return {x: x, y: y};
+		}
+
+		function piecewiseLinear(x, points) {
+			if (points.length === 0) return NaN;
+			for (let i = 0; i < points.length; i++) {
+				let b = points[i];
+				if (x < b.x) {
+					if (i === 0) {
+						return b.y;
+					} else {
+						let a = points[i - 1];
+						let m = (b.y - a.y) / (b.x - a.x);
+						return a.y + m * (x - a.x);
+					}
+				}
+			}
+			// If we have not yet returned, then x is higher than the highest x value in the array
+			return points[points.length - 1].y;
+		}
+
 		function animateBoxes(t0sec, t1sec, inputFunc) {
 			let startMs, previousTimeStampMs;
 
@@ -302,7 +324,15 @@
 			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return Math.exp(x); }, "e^x"));
 			boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
 			boxArray[0].downstream = boxArray[1];
-			animateBoxes(-3, 6, function(t) { return t; });
+			let points = [];
+			points.push(
+				point(0, -2), 
+				point(1, -2),
+				point(2, 0), 
+				point(3, 0), 
+				point(4, 1), 
+				point(5, 1));
+			animateBoxes(-3, 6, function(t) { return piecewiseLinear(t, points); });
 			// requestAnimationFrame(step);
 		}
 
