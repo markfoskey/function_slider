@@ -1,0 +1,181 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<style>
+		body {
+			background-color: black;
+
+		}
+
+		canvas {
+			position: absolute;
+			margin-left: auto;
+			margin-right: auto;
+			left: 0;
+			right: 0;
+			bottom: 20;
+			border: solid 1px white;
+		}
+	</style>
+</head>
+
+<body>
+	<canvas id="canvas"></canvas>
+	<script type="application/javascript" src="FunctionBox.js"></script>
+	<script type="application/javascript">
+
+
+		var imageWidth = window.innerWidth;
+		var imageHeight = window.innerHeight;
+		var canvas = null;
+		var ctx = null;
+		var bounds = null;
+		var selectedBox = null;
+		var panX = 0;
+		var panY = 0;
+		var mouseX = 0;
+		var mouseY = 0;
+		var oldMouseX = 0;
+		var oldMouseY = 0;
+		var mouseShiftX = 0;
+		var mouseShiftY = 0;
+		var mouseHeld = false;
+		var boxArray = [];
+
+		window.onmousedown = function (e) {
+			mouseHeld = true;
+
+			if (!selectedBox) {
+				for (var i = boxArray.length - 1; i > -1; --i) {
+					handleSelected = false;
+					boxSelected = false;
+					if (boxArray[i].handleContainsPoint(mouseX, mouseY)) {
+						handleSelected = true;
+						boxSelected = true;
+					} else if (boxArray[i].containsPoint(mouseX, mouseY)) {
+						boxSelected = true;
+					}
+					if (boxSelected) {
+						selectedBox = boxArray[i];
+						selectedBox.isSelected = true;
+						mouseStartX = e.clientX - bounds.left;
+						mouseStartY = e.clientY - bounds.top;
+						if (handleSelected) {
+							selectedBox.handleGrabbed = true;
+							mouseShiftX = mouseStartX - selectedBox.inHandleX;
+							mouseShiftY = mouseStartY - selectedBox.inHandleY;
+						} else {
+							selectedBox.handleGrabbed = false;
+							mouseShiftX = mouseStartX - selectedBox.x;
+							mouseShiftY = mouseStartY - selectedBox.y;
+						}
+						requestAnimationFrame(draw);
+						return;
+					}
+				}
+			}
+		}
+
+		window.onmousemove = function (e) {
+			mouseX = e.clientX - bounds.left;
+			mouseY = e.clientY - bounds.top;
+
+			if (mouseHeld) {
+				if (selectedBox) {
+					if (selectedBox.handleGrabbed) {
+						newInHandleY = mouseY - mouseShiftY
+						selectedBox.inHandleYshift = newInHandleY - selectedBox.yMid
+					} else {
+						selectedBox.x = mouseX - mouseShiftX;
+						selectedBox.y = mouseY - mouseShiftY;
+					}
+					selectedBox.updateBoxDetails();
+				}
+			}
+
+			oldMouseX = mouseX;
+			oldMouseY = mouseY;
+
+			requestAnimationFrame(draw);
+		}
+
+		window.onmouseup = function (e) {
+			mouseHeld = false;
+
+			if (selectedBox) {
+				selectedBox.isSelected = false;
+				selectedBox = null;
+				requestAnimationFrame(draw);
+			}
+		}
+
+		function draw() {
+			ctx.fillStyle = "white";
+			ctx.fillRect(0, 0, imageWidth, imageHeight);
+
+			var box = null;
+			var xMin = 0;
+			var xMax = 0;
+			var yMin = 0;
+			var yMax = 0;
+
+			for (var i = 0; i < boxArray.length; ++i) {
+				box = boxArray[i];
+				box.draw();
+			}
+		}
+
+		function point(x, y) {
+			return {x: x, y: y};
+		}
+
+		function piecewiseLinear(x, points) {
+			if (points.length === 0) return NaN;
+			for (let i = 0; i < points.length; i++) {
+				let b = points[i];
+				if (x < b.x) {
+					if (i === 0) {
+						return b.y;
+					} else {
+						let a = points[i - 1];
+						let m = (b.y - a.y) / (b.x - a.x);
+						return a.y + m * (x - a.x);
+					}
+				}
+			}
+			// If we have not yet returned, then x is higher than the highest x value in the array
+			return points[points.length - 1].y;
+		}
+
+		window.onload = function () {
+			canvas = document.getElementById("canvas");
+			canvas.width = imageWidth;
+			canvas.height = imageHeight;
+
+			bounds = canvas.getBoundingClientRect();
+			ctx = canvas.getContext("2d");
+			ctx.textAlign = "center";
+			ctx.font = "15px Arial";
+
+			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return Math.exp(x); }, "e^x"));
+			boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
+			boxArray[0].downstream = boxArray[1];
+			boxArray.forEach( element => { element.updateBoxDetails(); } );
+
+			requestAnimationFrame(draw);
+		}
+
+		window.onunload = function () {
+			canvas = null;
+			ctx = null;
+			bounds = null;
+			selectedBox = null;
+			boxArray = null;
+		}
+
+	</script>
+</body>
+
+</html>
