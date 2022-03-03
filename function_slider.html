@@ -191,19 +191,18 @@
 			ctx.textAlign = "center";
 			ctx.font = "15px Arial";
 
-			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return Math.exp(x); }, "e^x"));
-			boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
-			boxArray[0].downstream = boxArray[1];
+			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return x**2; }, "x^2"));
+			// boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
+			// boxArray[0].downstream = boxArray[1];
 			let points = [];
 			points.push(
-				point(0, -2), 
-				point(1, -2),
+				point(0, -1), 
+				point(1.25, -1),
 				point(2, 0), 
-				point(3, 0), 
-				point(4, 1), 
-				point(5, 1));
-			animateBoxes(-3, 6, function(t) { return piecewiseLinear(t, points); });
-			// requestAnimationFrame(step);
+				point(3.25, 0), 
+				point(4, 2), 
+				point(5, 2));
+			animateBoxes(0, 6, function(t) { return piecewiseLinear(t, points); });
 		}
 
 		window.onunload = function () {

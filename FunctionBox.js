@@ -81,6 +81,7 @@ FunctionBox.prototype.drawHandle = function (x, y) {
 
 FunctionBox.prototype.drawScale = function (x, ticksPerUnit, tickLen) {
     ctx.strokeStyle = 'white';
+    ctx.fillStyle = 'white';
     ctx.moveTo(x, this.scaleTopY)
     ctx.lineTo(x, this.scaleBottomY)
     halfTick = tickLen / 2
@@ -90,10 +91,14 @@ FunctionBox.prototype.drawScale = function (x, ticksPerUnit, tickLen) {
     numTicks = Math.floor((this.scaleTopY - this.yMid) / (this.yScale * tickSpacing))
     for (let index = -numTicks; index <= numTicks; index++) {
         y = this.yMid + index * tickSpacing * this.yScale;
-        thisTickLen = (index % ticksPerUnit == 0 ? tickLen : halfTick)
+        isUnit = index % ticksPerUnit == 0;
+        thisTickLen = (isUnit ? tickLen : halfTick)
         // console.log("index = " + index + ", thisTickLen = " + thisTickLen)
         ctx.moveTo(x - thisTickLen, y)
         ctx.lineTo(x + thisTickLen, y)
+        if (isUnit) {
+            ctx.fillText(index / ticksPerUnit, x + 2 * thisTickLen, y);
+        }
     }
 }
 
