@@ -89,6 +89,8 @@ FunctionBox.prototype.drawScale = function (x, ticksPerUnit, tickLen) {
     tickSpacing = 1.0 / ticksPerUnit
 
     numTicks = Math.floor((this.scaleTopY - this.yMid) / (this.yScale * tickSpacing))
+    origBaseline = ctx.textBaseline;
+    ctx.textBaseline = 'middle';
     for (let index = -numTicks; index <= numTicks; index++) {
         y = this.yMid + index * tickSpacing * this.yScale;
         isUnit = index % ticksPerUnit == 0;
@@ -100,6 +102,7 @@ FunctionBox.prototype.drawScale = function (x, ticksPerUnit, tickLen) {
             ctx.fillText(index / ticksPerUnit, x + 2 * thisTickLen, y);
         }
     }
+    ctx.textBaseline = origBaseline;
 }
 
 FunctionBox.prototype.connect = function (fb) {
