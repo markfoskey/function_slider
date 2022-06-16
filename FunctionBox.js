@@ -1,10 +1,12 @@
-function FunctionBox(x, y, width, height, fn, text) {
+function FunctionBox(x, y, width, height, fn, imageFilename, imageShift) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.height = height;
     this.fn = fn;
-    this.text = text;
+    this.img = new Image();
+    this.img.src = imageFilename;
+    this.imageShift = imageShift;
     this.handleHalfWidth = 0.1 * width;
     this.handleHalfHeight = this.handleHalfWidth;
     this.inHandleYshift = 0;
@@ -27,8 +29,11 @@ FunctionBox.prototype.setInput = function (input) {
 }
 
 FunctionBox.prototype.getInput = function () {
-    console.log("getInput: " + this.inHandleYshift);
     return this.inputFromHandleYshift(this.inHandleYshift);
+}
+
+FunctionBox.prototype.getOutput = function () {
+    return this.output;
 }
 
 // Called when a control is moved or the box is otherwise changed
@@ -45,7 +50,6 @@ FunctionBox.prototype.updateBoxDetails = function () {
     } else {
         this.output = 0;
     }
-    console.log("output = " + this.output);
     if (this.downstream instanceof FunctionBox) {
         this.downstream.setInput(this.output);
         this.downstream.updateBoxDetails();
@@ -127,13 +131,20 @@ FunctionBox.prototype.draw = function () {
     this.drawScale(this.outScaleX, 5, 10)
     ctx.stroke();
 
-    ctx.fillStyle = "white";
-    ctx.fillText(
-        this.text,
-        this.x + this.width * 0.5,
-        this.y + this.height * 0.5,
-        this.width
-    );
+    let imWidth = this.img.width * 0.7;
+    let imHeight = this.img.height * 0.7;
+    let imXpos = this.x + (this.width - imWidth) * 0.5 + this.width * this.imageShift / 100;
+    let imYpos = this.y + (this.height - imHeight) * 0.5;
+    ctx.drawImage(this.img, imXpos, imYpos, imWidth, imHeight);
+
+    // ctx.fillStyle = "white";
+    // ctx.fillText(
+    //     this.text,
+    //     this.x + this.width * 0.5,
+    //     this.y + this.height * 0.5,
+    //     this.width
+    // );
     ctx.fillText(this.getInput().toFixed(3), this.inScaleX, this.scaleTopY - 5, this.width);
+    ctx.fillText(this.getOutput().toFixed(3), this.outScaleX, this.scaleTopY - 5, this.width)
 }
 

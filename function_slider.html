@@ -33,6 +33,7 @@
 		var ctx = null;
 		var bounds = null;
 		var selectedBox = null;
+		var animatedBox = null;
 		var panX = 0;
 		var panY = 0;
 		var mouseX = 0;
@@ -156,7 +157,7 @@
 
 			function step(timestampMs) {
 
-				selectedBox = boxArray[0];
+				animatedBox = boxArray[0];
 
 				if (startMs === undefined) {
 					startMs = timestampMs;
@@ -167,8 +168,8 @@
 					// Math.min() is used here to make sure the motion stops after exactly the desired duration
 					const currTimeSec = t0sec + Math.min(elapsedMs, durationMs) / 1000;
 					const fnInput = inputFunc(currTimeSec);
-					selectedBox.setInput(fnInput);
-					selectedBox.updateBoxDetails();
+					animatedBox.setInput(fnInput);
+					animatedBox.updateBoxDetails();
 					draw();
 				}
 
@@ -191,7 +192,7 @@
 			ctx.textAlign = "center";
 			ctx.font = "15px Arial";
 
-			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return x**2; }, "x_squared.png"));
+			boxArray.push(new FunctionBox(160, 120, 200, 400, function (x) { return x**2; }, "./x_squared.png", 5));
 			// boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
 			// boxArray[0].downstream = boxArray[1];
 			let points = [];

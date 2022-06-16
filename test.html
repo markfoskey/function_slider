@@ -1,0 +1,15 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.11/paper-full.min.js"></script>
+<script>
+    const math = "x^2";
+    require('mathjax-full').init({
+        loader: {
+            load: ['input/asciimath', 'output/svg']
+        }
+    }).then((MathJax) => {
+        const adaptor = MathJax.startup.adaptor;
+        const html = MathJax.asciimath2svg(math);
+        console.log(adaptor.innerHTML(html));
+    }).catch((err) => console.error(err));
+ </script>
+<script type="text/javascript" id="MathJax-script" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<canvas id="canvas_1"></canvas>
