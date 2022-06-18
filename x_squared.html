@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<style>
+		body {
+			background-color: black;
+
+		}
+
+		canvas {
+			position: absolute;
+			margin-left: auto;
+			margin-right: auto;
+			left: 0;
+			right: 0;
+			bottom: 20;
+			border: solid 1px white;
+		}
+	</style>
+</head>
+
+<body>
+	<canvas id="canvas"></canvas>
+	<script type="application/javascript" src="FunctionBox.js"></script>
+	<script type="application/javascript" src="FunctionBoxAnimationFramework.js"></script>
+	<script type="application/javascript">
+
+		window.onload = function () {
+			canvas = document.getElementById("canvas");
+			canvas.width = imageWidth;
+			canvas.height = imageHeight;
+
+			bounds = canvas.getBoundingClientRect();
+			ctx = canvas.getContext("2d");
+			ctx.textAlign = "center";
+			ctx.font = "15px Arial";
+
+			boxArray.push(new FunctionBox(320, 120, 200, 400, function (x) { return x ** 2; }, "./x_squared.png", 5));
+			// boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
+			// boxArray[0].downstream = boxArray[1];
+			let points = [];
+			points.push(
+				point(0, -1),
+				point(1.25, -1),
+				point(2, 0),
+				point(3.25, 0),
+				point(4, 2),
+				point(5, 2));
+			animateBoxes(0, 6, function (t) { return piecewiseLinear(t, points); });
+		}
+
+	</script>
+</body>
+
+</html>
