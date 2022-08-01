@@ -5,7 +5,11 @@ function FunctionBox(x, y, width, height, fn, imageFilename, imageShift) {
     this.height = height;
     this.fn = fn;
     this.img = new Image();
-    this.img.src = imageFilename;
+    try {
+        this.img.src = imageFilename;
+    } catch {
+        this.img = new Image();
+    }
     this.imageShift = imageShift;
     this.handleHalfWidth = 0.1 * width;
     this.handleHalfHeight = this.handleHalfWidth;
@@ -13,6 +17,8 @@ function FunctionBox(x, y, width, height, fn, imageFilename, imageShift) {
     this.maxInput = 5;
     this.isSelected = false;
     this.downstream = null;
+    this.inScale = new FunctionScale();
+    this.outScale = new FunctionScale();
     this.updateBoxDetails();
 }
 
@@ -58,6 +64,70 @@ FunctionBox.prototype.updateBoxDetails = function () {
     this.inHandleY = this.yMid + this.inHandleYshift;
     this.outHandleX = this.x + this.width;
     this.outHandleY = this.yMid + this.yScale * this.output;
+}
+
+function FunctionScale()
+{
+    this.minVal = 0;
+    this.maxVal = 0;
+    this.x = 0;
+    this.yMin = 0;
+    this.yMax = 0;
+    this.interval = 0;
+    this.tickLen = 0;
+    this.maxMajorTicks = 8;
+    this.ticksPerMajor = 5;
+    this.unitsPerMajor = 1;
+}
+
+FunctionScale.prototype.rescaleInterval = function(delta)
+{
+    tickWidth = delta / this.maxMajorTicks;
+    exponent = Math.floor(Math.log10(tickWidth)) - 1;
+    return 10^exponent;
+}
+
+FunctionScale.prototype.updateScaleDetails = function(x, yMin, yMax) 
+{
+    this.x = x;
+    this.yMin = yMin;
+    this.yMax = yMax;
+    this.interval = this.maxVal - this.minVal;
+    scale = this.rescaleInterval(this.interval);
+    scaledInterval = this.interval / scale;
+    if (scaledInterval > this.maxMajorTicks) {
+        this.unitsPerMajor = Math.ceil(scaledInterval / this.maxMajorTicks) * scale;
+    } else if (scaledInterval < this.maxMajorTicks / 2) {
+        majorsPerUnit = Math.ceil(this.maxMajorTicks / scaledInterval)
+        this.unitsPerMajor = scale / majorsPerUnit;
+    }
+}
+
+FunctionScale.prototype.drawScale = function () {
+    tickLen = this.tickLen;
+    ctx.strokeStyle = 'white';
+    ctx.fillStyle = 'white';
+    ctx.moveTo(this.x, this.yMax)
+    ctx.lineTo(this.x, this.yMin)
+    halfTick = tickLen / 2
+
+    tickSpacing = this.unitsPerMajor / this.ticksPerMajor;
+
+    numTicks = Math.floor((this.scaleTopY - this.yMid) / (this.yScale * tickSpacing))
+    origBaseline = ctx.textBaseline;
+    ctx.textBaseline = 'middle';
+    for (let index = -numTicks; index <= numTicks; index++) {
+        y = this.yMid + index * tickSpacing * this.yScale;
+        isUnit = index % ticksPerUnit == 0;
+        thisTickLen = (isUnit ? tickLen : halfTick)
+        // console.log("index = " + index + ", thisTickLen = " + thisTickLen)
+        ctx.moveTo(x - thisTickLen, y)
+        ctx.lineTo(x + thisTickLen, y)
+        if (isUnit) {
+            ctx.fillText(index / ticksPerUnit, x + 2 * thisTickLen, y);
+        }
+    }
+    ctx.textBaseline = origBaseline;
 }
 
 FunctionBox.prototype.containsPoint = function (x, y) {
@@ -135,7 +205,11 @@ FunctionBox.prototype.draw = function () {
     let imHeight = this.img.height * 0.7;
     let imXpos = this.x + (this.width - imWidth) * 0.5 + this.width * this.imageShift / 100;
     let imYpos = this.y + (this.height - imHeight) * 0.5;
-    ctx.drawImage(this.img, imXpos, imYpos, imWidth, imHeight);
+    try {
+        ctx.drawImage(this.img, imXpos, imYpos, imWidth, imHeight);
+    } catch (e) {
+        console.error(e);
+    }
 
     // ctx.fillStyle = "white";
     // ctx.fillText(

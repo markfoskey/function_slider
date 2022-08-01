@@ -37,17 +37,13 @@
 			ctx.textAlign = "center";
 			ctx.font = "15px Arial";
 
-			boxArray.push(new FunctionBox(320, 120, 200, 400, function (x) { return x ** 2; }, "./x_squared.png", 5));
+			boxArray.push(new FunctionBox(320, 120, 200, 400, function (x) { return Math.sin(x); }, "./sin_x.png", 5));
 			// boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
 			// boxArray[0].downstream = boxArray[1];
 			let points = [];
 			points.push(
-				point(0, -1),
-				point(1.25, -1),
-				point(2, 0),
-				point(3.25, 0),
-				point(4, 2),
-				point(5, 2));
+				point(0, -4),
+				point(5, 4));
 			animateBoxes(0, 6, function (t) { return piecewiseLinear(t, points); });
 		}
 
