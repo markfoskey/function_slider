@@ -58,12 +58,12 @@ window.onmousemove = function (e) {
         if (selectedBox) {
             if (selectedBox.handleGrabbed) {
                 newInHandleY = mouseY - mouseShiftY
-                selectedBox.inHandleYshift = newInHandleY - selectedBox.yMid
+                selectedBox.setInHandleY(newInHandleY);
             } else {
-                selectedBox.x = mouseX - mouseShiftX;
-                selectedBox.y = mouseY - mouseShiftY;
+                const newX = mouseX - mouseShiftX;
+                const newY = mouseY - mouseShiftY;
+                selectedBox.setPosition(newX, newY);
             }
-            selectedBox.updateBoxDetails();
         }
     }
 
