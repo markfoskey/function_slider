@@ -140,7 +140,6 @@ function animateBoxes(t0sec, t1sec, inputFunc) {
             const currTimeSec = t0sec + Math.min(elapsedMs, durationMs) / 1000;
             const fnInput = inputFunc(currTimeSec);
             animatedBox.setInput(fnInput);
-            animatedBox.updateBoxDetails();
             draw();
         }
 

@@ -1,4 +1,8 @@
+
 function FunctionBox(x, y, width, height, fn, imageFilename, imageShift) {
+
+    // Initialize everything
+    console.log("Initializing");
     this.x = x;
     this.y = y;
     this.width = width;
@@ -7,11 +11,11 @@ function FunctionBox(x, y, width, height, fn, imageFilename, imageShift) {
     this.input = 0;
     this.output = 0;
     this.img = new Image();
-    try {
-        this.img.src = imageFilename;
-    } catch {
-        this.img = new Image();
-    }
+    // try {
+    //     this.img.src = imageFilename;
+    // } catch {
+    //     this.img = new Image();
+    // }
     this.imageShift = imageShift;
     this.handleHalfWidth = 0.1 * width;
     this.handleHalfHeight = this.handleHalfWidth;
@@ -23,7 +27,11 @@ function FunctionBox(x, y, width, height, fn, imageFilename, imageShift) {
     this.downstream = null;
     this.inScale = new FunctionScale();
     this.outScale = new FunctionScale();
-    this.updateBoxDetails();
+
+    // Make the geometry consistent. Both of these assume some variables are initialized
+    this.setPosition(x, y);
+    this.setInput(0);
+
 }
 
 FunctionBox.prototype.getInput = function () {
@@ -66,8 +74,8 @@ FunctionBox.prototype.setPosition = function (x, y) {
     outScaleX = this.x + this.width - scaleMargin
     scaleTopY = this.y + scaleMargin;
     scaleBottomY = this.y + this.height - scaleMargin;
-    this.inScale.updateScaleDetails(inScaleX, scaleBottomY, scaleTopY);
-    this.outScale.updateScaleDetails(outScaleX, scaleBottomY, scaleTopY);
+    this.inScale.updateScaleDetails(inScaleX, scaleBottomY, scaleTopY, 1.5);
+    this.outScale.updateScaleDetails(outScaleX, scaleBottomY, scaleTopY, -1.5);
     this.inHandleX = this.x;
     this.inHandleY = this.inScale.yFromVal(this.input);
     this.outHandleX = this.x + this.width;
@@ -76,75 +84,77 @@ FunctionBox.prototype.setPosition = function (x, y) {
 
 function FunctionScale()
 {
-    this.minVal = 0; // The min and max numerical values represented
-    this.maxVal = 0; 
+    this.minVal = -5; // The min and max numerical values represented
+    this.maxVal = 5; 
     this.x = 0; // The x coordinate of the scale line in pixels
-    this.yMin = 0; // Min and max y coordinates of the scale in pixels
-    this.yMax = 0;
+    this.yBot = 0; // Bottom and top y coordinates of the scale in pixels; yBot > yTop.
+    this.yTop = 0;
     this.valHeight = 0; // Internal; just maxVal - minVal
     this.pixHeight = 0;
     this.majorTickSpacing = 0; // Separation between major ticks
-    this.maxMajorTicks = 8;
+    this.maxMajorTicks = 10;
     this.ticksPerMajor = 5;
     this.pixelsPerVal = 0;
+    this.tickLen = 24;
+    this.labelSep = 0;
 }
 
 FunctionScale.prototype.yFromVal = function(val)
 {
     // Note that this.yMax is the lowest point on the screen, and this.pixelsPerVal is negative
     // so you move towards the top of the screen (decreasing pixel number in y) as val increases
-    return this.yMax + this.pixelsPerVal * (val - this.minVal);
+    return this.yBot + this.pixelsPerVal * (val - this.minVal);
 }
 
 FunctionScale.prototype.valFromY = function(y)
 {
-    return this.minVal + (y - this.yMax) / this.pixelsPerVal;
+    return this.minVal + (y - this.yBot) / this.pixelsPerVal;
 }
 
 // If you divide the height by this number, you get a number in the range [1, 10)
 FunctionScale.prototype.intervalRescaler = function(height)
 {
     exponent = Math.floor(Math.log10(height));
-    return 10^exponent;
+    return 10 ** exponent;
 }
 
 FunctionScale.prototype.calcMajorTickSpacing = function(height)
 {
     const scale = this.intervalRescaler(height);
-    const scaledHeight = height / scale; // Should be in [1, 10)
-    const candidateScaledSpacings = [5, 2, 1];
-    let spacing = 10;
+    const candidateScaledSpacings = [5 * scale, 2 * scale, scale];
+    let spacing = 10 * scale;
     for (let i = 0; i < 10; ++i)
     {
-        const scaleSpacingMultiplier = 10^(-i);
+        const scaleSpacingMultiplier = 10 ** (-i);
         for (const baseSpacing of candidateScaledSpacings)
         {
             const candidateScaledSpacing = baseSpacing * scaleSpacingMultiplier;
             const numMajorTicks = Math.floor(height / candidateScaledSpacing);
-            if (numMajorTicks > this.maxMajorTicks) return spacing * scale;
+            if (numMajorTicks > this.maxMajorTicks) return spacing;
             spacing = candidateScaledSpacing;
         }
     }
-    return spacing * scale;
+    return spacing;
 }
 
-FunctionScale.prototype.updateScaleDetails = function(x, yMin, yMax) 
+FunctionScale.prototype.updateScaleDetails = function(x, yBot, yTop, labelSep) 
 {
     this.x = x;
-    this.yMin = yMin;
-    this.yMax = yMax;
+    this.yBot = yBot;
+    this.yTop = yTop;
     this.valHeight = this.maxVal - this.minVal;
-    this.pixHeight = this.yMax - this.yMin;
-    this.pixelsPerVal = -this.pixHeight / this.valHeight; // Negative because pixels increment in the other direction
+    this.pixHeight = this.yTop - this.yBot;
+    this.pixelsPerVal = this.pixHeight / this.valHeight; 
     this.majorTickSpacing = this.calcMajorTickSpacing(this.valHeight);
+    this.labelSep = labelSep;
 }
 
 FunctionScale.prototype.drawScale = function () {
     tickLen = this.tickLen;
-    ctx.strokeStyle = 'white';
-    ctx.fillStyle = 'white';
-    ctx.moveTo(this.x, this.yMax)
-    ctx.lineTo(this.x, this.yMin)
+    ctx.strokeStyle = 'black';
+    ctx.fillStyle = 'black';
+    ctx.moveTo(this.x, this.yTop)
+    ctx.lineTo(this.x, this.yBot)
     halfTick = tickLen / 2
 
     const tickSpacing = this.majorTickSpacing / this.ticksPerMajor;
@@ -157,14 +167,15 @@ FunctionScale.prototype.drawScale = function () {
     ctx.textBaseline = 'middle';
     for (let index = 0; index < numTicks; index++) {
         const val = firstTick + tickSpacing * index;
+        console.log("firstTick = " + firstTick + ", tickSpacing = " + tickSpacing + ", index = " + index + ", val = " + val);
         const y = this.yFromVal(val);
-        const isMajor = (index - firstMajorTickIndex) % ticksPerMajor === 0;
+        const isMajor = (index - firstMajorTickIndex) % this.ticksPerMajor === 0;
         const thisTickLen = (isMajor ? tickLen : halfTick)
-        // console.log("index = " + index + ", thisTickLen = " + thisTickLen)
-        ctx.moveTo(x - thisTickLen, y)
-        ctx.lineTo(x + thisTickLen, y)
+        // console.log("index = " + index + ", y = " + y + ", thisTickLen = " + thisTickLen)
+        ctx.moveTo(this.x - thisTickLen, y)
+        ctx.lineTo(this.x + thisTickLen, y)
         if (isMajor) {
-            ctx.fillText(index / this.ticksPerMajor, x + 2 * thisTickLen, y);
+            ctx.fillText(val.toPrecision(1), this.x + this.labelSep * thisTickLen, y);
         }
     }
     ctx.textBaseline = origBaseline;
@@ -218,11 +229,11 @@ FunctionBox.prototype.draw = function () {
     let imHeight = this.img.height * 0.7;
     let imXpos = this.x + (this.width - imWidth) * 0.5 + this.width * this.imageShift / 100;
     let imYpos = this.y + (this.height - imHeight) * 0.5;
-    try {
-        ctx.drawImage(this.img, imXpos, imYpos, imWidth, imHeight);
-    } catch (e) {
-        console.error(e);
-    }
+        // try {
+        //     ctx.drawImage(this.img, imXpos, imYpos, imWidth, imHeight);
+        // } catch (e) {
+        //     console.log("No image");
+        // }
 
     // ctx.fillStyle = "white";
     // ctx.fillText(
