@@ -37,7 +37,9 @@
 			ctx.textAlign = "center";
 			ctx.font = "15px Arial";
 
-			boxArray.push(new FunctionBox(320, 120, 200, 400, function (x) { return Math.sin(x); }, "./sin_x.png", 5));
+			boxArray.push(new FunctionBox(320, 120, 200, 400, function (x) { return Math.sin(x); }));
+			boxArray[0].setLabel("./sin_x.png", 5, 15)
+			boxArray[0].setRanges(-2.7, 8.5, -1.1, 1.1);
 			// boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
 			// boxArray[0].downstream = boxArray[1];
 			let points = [];
