@@ -150,14 +150,11 @@ function FunctionBox(x, y, width, height, fn) {
 
 }
 
-FunctionBox.prototype.setLabel = function(imageFilename, xShift, yShift) {
-    let file = new file(imageFilename);
-    if (file.exists()) {
-        try {
-            this.img.src = imageFilename;
-        } catch {
-            this.img = new Image();
-        }
+FunctionBox.prototype.setLabel = function (imageFilename, xShift, yShift) {
+    try {
+        this.img.src = imageFilename;
+    } catch {
+        this.img = new Image();
     }
     this.xLabelShift = xShift;
     this.yLabelShift = yShift;
@@ -263,7 +260,7 @@ FunctionBox.prototype.draw = function () {
     let imWidth = this.img.width * 0.7;
     let imHeight = this.img.height * 0.7;
     let imXpos = this.x + (this.width - imWidth) * 0.5 + this.width * this.xLabelShift / 100;
-    let imYpos = this.y + (this.height - imHeight) * 0.5;
+    let imYpos = this.y + (this.height - imHeight) * 0.5 - this.width * this.yLabelShift / 100;
     try {
         ctx.drawImage(this.img, imXpos, imYpos, imWidth, imHeight);
     } catch (e) {

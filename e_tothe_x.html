@@ -37,15 +37,15 @@
 			ctx.textAlign = "center";
 			ctx.font = "15px Arial";
 
-			boxArray.push(new FunctionBox(320, 120, 200, 400, function (x) { return Math.sin(x); }));
-			boxArray[0].setLabel("./sin_x.png", 0, 3)
-			boxArray[0].setRanges(-2.7, 8.5, -1.1, 1.1);
+			boxArray.push(new FunctionBox(320, 500, 200, 400, function (x) { return Math.exp(x); }));
+			boxArray[0].setLabel("./e_tothe_x.png", 0, 3)
+			boxArray[0].setRanges(-1, 4, -10, 200);
 			// boxArray.push(new FunctionBox(400, 120, 200, 400, function (x) { return Math.sin(x); }, "sin(x)"));
 			// boxArray[0].downstream = boxArray[1];
 			let points = [];
 			points.push(
-				point(0, -2.7),
-				point(5, 8.5));
+				point(0, -1),
+				point(7, 20));
 			animateBoxes(0, 6, function (t) { return piecewiseLinear(t, points); });
 		}
 
